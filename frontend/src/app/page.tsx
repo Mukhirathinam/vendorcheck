@@ -13,9 +13,11 @@ const Icons = {
   Scale: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>,
   Alert: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>,
   Check: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
+  Download: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
 };
 
 export default function Home() {
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<any>(null);
@@ -42,6 +44,10 @@ export default function Home() {
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   const getBadgeClass = (score: number) => {
     if (score >= 75) return 'badge-success';
     if (score >= 50) return 'badge-warning';
@@ -60,6 +66,54 @@ export default function Home() {
     return 'text-red';
   };
 
+  const renderHistory = () => (
+    <div className="dashboard-content">
+      <div className="dashboard-title">
+        <h2>Report History</h2>
+      </div>
+      <div className="card" style={{padding: 0, overflow: 'hidden'}}>
+        <table className="history-table">
+          <thead>
+            <tr>
+              <th>Date Analyzed</th>
+              <th>Company Name</th>
+              <th>CIN / Identifier</th>
+              <th>Trust Score</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Aug 04, 2026</td>
+              <td>Reliance Retail Limited</td>
+              <td>U01100MH1999PLC120563</td>
+              <td><span className="text-green" style={{fontWeight: 700}}>92</span></td>
+              <td><span className="badge badge-success">Approved</span></td>
+              <td><button className="btn-secondary" onClick={() => setActiveTab('dashboard')}>View</button></td>
+            </tr>
+            <tr>
+              <td>Aug 03, 2026</td>
+              <td>Fraudsters Trading Pvt Ltd</td>
+              <td>U52100KA2021PTC145678</td>
+              <td><span className="text-red" style={{fontWeight: 700}}>24</span></td>
+              <td><span className="badge badge-danger">Rejected</span></td>
+              <td><button className="btn-secondary" onClick={() => setActiveTab('dashboard')}>View</button></td>
+            </tr>
+            <tr>
+              <td>Jul 28, 2026</td>
+              <td>Infosys Limited</td>
+              <td>L85110KA1981PLC013115</td>
+              <td><span className="text-green" style={{fontWeight: 700}}>98</span></td>
+              <td><span className="badge badge-success">Approved</span></td>
+              <td><button className="btn-secondary" onClick={() => setActiveTab('dashboard')}>View</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
   return (
     <div className="app-layout">
       {/* Sidebar Navigation */}
@@ -70,10 +124,16 @@ export default function Home() {
         </div>
         
         <nav>
-          <div className="nav-item active">
+          <div 
+            className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
+            onClick={() => setActiveTab('dashboard')}
+          >
             <Icons.Dashboard /> Due Diligence
           </div>
-          <div className="nav-item">
+          <div 
+            className={`nav-item ${activeTab === 'history' ? 'active' : ''}`}
+            onClick={() => setActiveTab('history')}
+          >
             <Icons.History /> Report History
           </div>
           <div className="nav-item">
@@ -92,163 +152,177 @@ export default function Home() {
             type="text" 
             placeholder="Search by GSTIN, CIN, or Company Name (Try '123' for fraud case)..."
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setActiveTab('dashboard'); // Switch back to dashboard when typing
+            }}
           />
           <button type="submit" className="btn-primary" disabled={loading}>
             {loading ? 'Analyzing...' : 'Run Analysis'}
           </button>
         </form>
 
-        {loading && (
-          <div className="loader-container">
-            <div className="spinner"></div>
-            <p style={{color: 'var(--text-secondary)'}}>Aggregating data from 6 government databases...</p>
-          </div>
-        )}
-
-        {!loading && !report && (
-          <div className="empty-state">
-            <Icons.Search />
-            <h2>No vendor selected</h2>
-            <p>Enter a GST number or Company Name above to generate a comprehensive trust report.</p>
-          </div>
-        )}
-
-        {!loading && report && (
-          <div className="dashboard-content">
-            <div className="dashboard-title">
-              <div>
-                <h2>{report.identity.company_name}</h2>
-                <span style={{fontSize: '1rem', color: 'var(--text-secondary)', fontWeight: 400}}>
-                  CIN: {report.identity.cin} | Generated Today
-                </span>
+        {activeTab === 'history' ? (
+          renderHistory()
+        ) : (
+          <>
+            {loading && (
+              <div className="loader-container">
+                <div className="spinner"></div>
+                <p style={{color: 'var(--text-secondary)'}}>Aggregating data from 6 government databases...</p>
               </div>
-              <div className={`badge ${getBadgeClass(report.trust_score)}`}>
-                {report.trust_score >= 75 ? <Icons.Check /> : <Icons.Alert />}
-                {report.recommendation}
-              </div>
-            </div>
+            )}
 
-            <div className="grid-layout">
-              {/* Left Column: Score */}
-              <div className="card score-container">
-                <h3 className="card-header" style={{border: 'none', justifyContent: 'center'}}>Overall Trust Score</h3>
-                <div className={`circular-score ${getScoreColor(report.trust_score)}`}>
-                  {report.trust_score}
-                </div>
-                <p className={`score-text ${getScoreText(report.trust_score)}`} style={{marginBottom: '1rem'}}>
-                  {report.recommendation}
-                </p>
-                <p style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>
-                  Based on AI aggregation of MCA, GST, eCourts, NCLT, EPFO, and RBI records.
-                </p>
+            {!loading && !report && (
+              <div className="empty-state">
+                <Icons.Search />
+                <h2>No vendor selected</h2>
+                <p>Enter a GST number or Company Name above to generate a comprehensive trust report.</p>
               </div>
+            )}
 
-              {/* Right Column: Detailed Data */}
-              <div className="grid-layout-right">
-                
-                {/* Identity & Legal Grid */}
-                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem'}}>
-                  {/* Company Identity */}
-                  <div className="card">
-                    <h3 className="card-header"><Icons.Building /> Corporate Identity</h3>
-                    <div className="details-grid single">
-                      <div className="detail-item">
-                        <span className="detail-label">Registered Address</span>
-                        <span className="detail-value">{report.identity.address}</span>
-                      </div>
-                      <div className="details-grid" style={{marginTop: '0.5rem'}}>
-                        <div className="detail-item">
-                          <span className="detail-label">Incorp. Date</span>
-                          <span className="detail-value">{report.identity.incorporation_date}</span>
-                        </div>
-                        <div className="detail-item">
-                          <span className="detail-label">Paid-up Capital</span>
-                          <span className="detail-value">{report.identity.paid_up_capital}</span>
-                        </div>
-                      </div>
-                    </div>
+            {!loading && report && (
+              <div className="dashboard-content">
+                <div className="dashboard-title">
+                  <div>
+                    <h2>{report.identity.company_name}</h2>
+                    <span style={{fontSize: '1rem', color: 'var(--text-secondary)', fontWeight: 400}}>
+                      CIN: {report.identity.cin} | Generated Today
+                    </span>
                   </div>
-
-                  {/* GST Compliance */}
-                  <div className="card">
-                    <h3 className="card-header"><Icons.FileText /> Tax & Compliance</h3>
-                    <div className="details-grid">
-                      <div className="detail-item">
-                        <span className="detail-label">GSTIN</span>
-                        <span className="detail-value">{report.gst_compliance.gstin}</span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">GST Status</span>
-                        <span className={`detail-value ${report.gst_compliance.status === 'Active' ? 'text-green' : 'text-red'}`}>
-                          {report.gst_compliance.status}
-                        </span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Taxpayer Type</span>
-                        <span className="detail-value">{report.gst_compliance.taxpayer_type}</span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-label">Last Return Filed</span>
-                        <span className="detail-value">{report.gst_compliance.last_return_filed}</span>
-                      </div>
+                  <div style={{display: 'flex', gap: '1rem', alignItems: 'center'}}>
+                    <div className={`badge ${getBadgeClass(report.trust_score)}`}>
+                      {report.trust_score >= 75 ? <Icons.Check /> : <Icons.Alert />}
+                      {report.recommendation}
                     </div>
+                    <button onClick={handlePrint} className="btn-secondary">
+                      <Icons.Download /> Export PDF
+                    </button>
                   </div>
                 </div>
 
-                {/* Legal & Risk Flags */}
-                <div className="card">
-                  <h3 className="card-header"><Icons.Scale /> Legal Intelligence & Risk Flags</h3>
-                  
-                  {/* Key Metrics Row */}
-                  <div className="details-grid" style={{gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: '1.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-color)'}}>
-                    <div className="detail-item">
-                      <span className="detail-label">NCLT Cases</span>
-                      <span className={`detail-value ${report.legal.nclt_cases > 0 ? 'text-red' : ''}`}>{report.legal.nclt_cases}</span>
+                <div className="grid-layout">
+                  {/* Left Column: Score */}
+                  <div className="card score-container">
+                    <h3 className="card-header" style={{border: 'none', justifyContent: 'center'}}>Overall Trust Score</h3>
+                    <div className={`circular-score ${getScoreColor(report.trust_score)}`}>
+                      {report.trust_score}
                     </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Civil Court Cases</span>
-                      <span className="detail-value">{report.legal.civil_cases}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">RBI Defaulter</span>
-                      <span className={`detail-value ${report.legal.rbi_defaulter ? 'text-red' : 'text-green'}`}>{report.legal.rbi_defaulter ? 'Yes' : 'No'}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Disqualified Directors</span>
-                      <span className={`detail-value ${report.directors.disqualified_directors > 0 ? 'text-red' : ''}`}>{report.directors.disqualified_directors} / {report.directors.total_directors}</span>
-                    </div>
+                    <p className={`score-text ${getScoreText(report.trust_score)}`} style={{marginBottom: '1rem'}}>
+                      {report.recommendation}
+                    </p>
+                    <p style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>
+                      Based on AI aggregation of MCA, GST, eCourts, NCLT, EPFO, and RBI records.
+                    </p>
                   </div>
 
-                  {/* Flag List */}
-                  {report.risk_flags && report.risk_flags.length > 0 ? (
-                    <div className="flag-list">
-                      {report.risk_flags.map((flag: any, idx: number) => (
-                        <div key={idx} className={`flag-box ${flag.severity}`}>
-                          <div style={{color: flag.severity === 'CRITICAL' ? 'var(--danger)' : 'var(--warning)', marginTop: '2px'}}>
-                            <Icons.Alert />
+                  {/* Right Column: Detailed Data */}
+                  <div className="grid-layout-right">
+                    
+                    {/* Identity & Legal Grid */}
+                    <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem'}}>
+                      {/* Company Identity */}
+                      <div className="card">
+                        <h3 className="card-header"><Icons.Building /> Corporate Identity</h3>
+                        <div className="details-grid single">
+                          <div className="detail-item">
+                            <span className="detail-label">Registered Address</span>
+                            <span className="detail-value">{report.identity.address}</span>
                           </div>
+                          <div className="details-grid" style={{marginTop: '0.5rem'}}>
+                            <div className="detail-item">
+                              <span className="detail-label">Incorp. Date</span>
+                              <span className="detail-value">{report.identity.incorporation_date}</span>
+                            </div>
+                            <div className="detail-item">
+                              <span className="detail-label">Paid-up Capital</span>
+                              <span className="detail-value">{report.identity.paid_up_capital}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* GST Compliance */}
+                      <div className="card">
+                        <h3 className="card-header"><Icons.FileText /> Tax & Compliance</h3>
+                        <div className="details-grid">
+                          <div className="detail-item">
+                            <span className="detail-label">GSTIN</span>
+                            <span className="detail-value">{report.gst_compliance.gstin}</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-label">GST Status</span>
+                            <span className={`detail-value ${report.gst_compliance.status === 'Active' ? 'text-green' : 'text-red'}`}>
+                              {report.gst_compliance.status}
+                            </span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-label">Taxpayer Type</span>
+                            <span className="detail-value">{report.gst_compliance.taxpayer_type}</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-label">Last Return Filed</span>
+                            <span className="detail-value">{report.gst_compliance.last_return_filed}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Legal & Risk Flags */}
+                    <div className="card">
+                      <h3 className="card-header"><Icons.Scale /> Legal Intelligence & Risk Flags</h3>
+                      
+                      {/* Key Metrics Row */}
+                      <div className="details-grid" style={{gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: '1.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-color)'}}>
+                        <div className="detail-item">
+                          <span className="detail-label">NCLT Cases</span>
+                          <span className={`detail-value ${report.legal.nclt_cases > 0 ? 'text-red' : ''}`}>{report.legal.nclt_cases}</span>
+                        </div>
+                        <div className="detail-item">
+                          <span className="detail-label">Civil Court Cases</span>
+                          <span className="detail-value">{report.legal.civil_cases}</span>
+                        </div>
+                        <div className="detail-item">
+                          <span className="detail-label">RBI Defaulter</span>
+                          <span className={`detail-value ${report.legal.rbi_defaulter ? 'text-red' : 'text-green'}`}>{report.legal.rbi_defaulter ? 'Yes' : 'No'}</span>
+                        </div>
+                        <div className="detail-item">
+                          <span className="detail-label">Disqualified Directors</span>
+                          <span className={`detail-value ${report.directors.disqualified_directors > 0 ? 'text-red' : ''}`}>{report.directors.disqualified_directors} / {report.directors.total_directors}</span>
+                        </div>
+                      </div>
+
+                      {/* Flag List */}
+                      {report.risk_flags && report.risk_flags.length > 0 ? (
+                        <div className="flag-list">
+                          {report.risk_flags.map((flag: any, idx: number) => (
+                            <div key={idx} className={`flag-box ${flag.severity}`}>
+                              <div style={{color: flag.severity === 'CRITICAL' ? 'var(--danger)' : 'var(--warning)', marginTop: '2px'}}>
+                                <Icons.Alert />
+                              </div>
+                              <div>
+                                <h4>{flag.source} Flag ({flag.severity})</h4>
+                                <p>{flag.description}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flag-box" style={{borderColor: 'var(--success)', background: 'var(--success-bg)'}}>
+                          <div style={{color: 'var(--success)'}}><Icons.Check /></div>
                           <div>
-                            <h4>{flag.source} Flag ({flag.severity})</h4>
-                            <p>{flag.description}</p>
+                            <h4 style={{color: 'var(--success)'}}>No Significant Risks Found</h4>
+                            <p>No derogatory data found in the 6 analyzed databases.</p>
                           </div>
                         </div>
-                      ))}
+                      )}
                     </div>
-                  ) : (
-                    <div className="flag-box" style={{borderColor: 'var(--success)', background: 'var(--success-bg)'}}>
-                      <div style={{color: 'var(--success)'}}><Icons.Check /></div>
-                      <div>
-                        <h4 style={{color: 'var(--success)'}}>No Significant Risks Found</h4>
-                        <p>No derogatory data found in the 6 analyzed databases.</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
 
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            )}
+          </>
         )}
       </main>
     </div>

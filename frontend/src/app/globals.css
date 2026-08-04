@@ -142,6 +142,26 @@ body {
 .btn-primary:hover:not(:disabled) { background-color: var(--brand-primary-hover); }
 .btn-primary:disabled { opacity: 0.5; cursor: wait; }
 
+.btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: inherit;
+  font-weight: 500;
+}
+.btn-secondary svg { width: 16px; height: 16px; }
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-light);
+}
+
 /* Dashboard Content */
 .dashboard-title {
   font-size: 1.8rem;
@@ -309,6 +329,30 @@ body {
   line-height: 1.5;
 }
 
+/* History Table */
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.history-table th, .history-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.history-table th {
+  color: var(--text-tertiary);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+}
+
+.history-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
 /* Empty State & Loader */
 .empty-state {
   display: flex;
@@ -344,3 +388,41 @@ body {
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Print Styles for PDF Export */
+@media print {
+  .sidebar, .header-search-bar, .bg-blobs, .btn-primary, .nav-item, .btn-secondary {
+    display: none !important;
+  }
+  .main-content {
+    margin-left: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    color: black !important;
+  }
+  .card {
+    background: white !important;
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+    break-inside: avoid;
+    color: black !important;
+  }
+  .card-header, .detail-label, .detail-value, .dashboard-title h2, span, p {
+    color: black !important;
+  }
+  .flag-box {
+    border: 1px solid #ccc !important;
+    background: transparent !important;
+  }
+  .badge {
+    border: 1px solid #333 !important;
+    background: transparent !important;
+  }
+  body, .app-layout {
+    background: white !important;
+    color: black !important;
+  }
+  /* Preserve text colors for score/flags */
+  .text-red, .score-red { color: #ef4444 !important; }
+  .text-green, .score-green { color: #10b981 !important; }
+}
