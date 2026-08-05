@@ -3,7 +3,7 @@ uvicorn[standard]
 pydantic
 sqlalchemy
 pyjwt
-passlib[bcrypt]
+bcrypt
 httpx
 reportlab
 python-dotenv
