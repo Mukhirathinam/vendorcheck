@@ -1,8 +1,41 @@
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Text, DateTime
+from sqlalchemy.orm import relationship
+from database import Base
+import datetime
 from pydantic import BaseModel
-from typing import Optional, List, Dict
+from typing import Optional, List
+
+# --- SQLAlchemy DB Models ---
+class DBUser(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    reports = relationship("DBReport", back_populates="owner")
+
+class DBReport(Base):
+    __tablename__ = "reports"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    company_name = Column(String)
+    cin = Column(String)
+    trust_score = Column(Integer)
+    status = Column(String) # 'Approved', 'Rejected'
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    owner = relationship("DBUser", back_populates="reports")
+
+# --- Pydantic Schemas ---
+class UserCreate(BaseModel):
+    email: str
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
 
 class VendorQuery(BaseModel):
-    query_type: str  # 'gst', 'cin', 'name'
+    query_type: str
     query_value: str
 
 class RiskFlag(BaseModel):
