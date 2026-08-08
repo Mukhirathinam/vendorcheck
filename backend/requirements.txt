@@ -7,3 +7,6 @@ bcrypt
 httpx
 reportlab
 python-dotenv
+beautifulsoup4
+pdfplumber
+lxml
