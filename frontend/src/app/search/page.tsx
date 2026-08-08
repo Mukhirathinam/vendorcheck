@@ -25,6 +25,7 @@ export default function SearchPage() {
   const [finalScore, setFinalScore] = useState(0);
   const [breakdown, setBreakdown] = useState<any>(null);
   const [riskFlags, setRiskFlags] = useState<any[]>([]);
+  const [reportId, setReportId] = useState<number | null>(null);
 
   // Informal Vendor State
   const [informalForm, setInformalForm] = useState({
@@ -40,6 +41,7 @@ export default function SearchPage() {
     
     setIsSearching(true);
     setSearchComplete(false);
+    setReportId(null);
     setProgressState({
       gst: 'checking',
       mca: 'pending',
@@ -49,40 +51,100 @@ export default function SearchPage() {
       news: 'pending'
     });
 
-    // Simulate SSE / Live progress
-    const steps = ['gst', 'mca', 'ecourts', 'nclt', 'rbi', 'news'];
-    
-    for (let i = 0; i < steps.length; i++) {
-      const step = steps[i];
-      setProgressState(prev => ({ ...prev, [step]: 'checking' }));
-      
-      // Artificial delay
-      await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 800));
-      
-      setProgressState(prev => ({ 
-        ...prev, 
-        [step]: Math.random() > 0.8 ? 'risk' : 'done' 
-      }));
-    }
-
-    // Mock API response after "streaming"
-    setTimeout(() => {
-      setIsSearching(false);
-      setSearchComplete(true);
-      setFinalScore(78);
-      setBreakdown({
-        gst: { score: 25, max: 25, label: 'GST Compliance' },
-        mca: { score: 20, max: 20, label: 'MCA Filings' },
-        ecourts: { score: 15, max: 20, label: 'Litigation (eCourts)' },
-        nclt: { score: 10, max: 10, label: 'NCLT/IBBI' },
-        rbi: { score: 5, max: 15, label: 'RBI/SEBI Defaulters' },
-        news: { score: 3, max: 10, label: 'Adverse News' }
+    try {
+      const token = getToken();
+      const response = await fetch(`${API_URL}/api/v1/check/stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ query_value: gstin })
       });
-      setRiskFlags([
-        { id: 1, level: 'HIGH', title: 'Pending Litigation', description: '2 pending cases found in District Court regarding payment disputes.' },
-        { id: 2, level: 'CRITICAL', title: 'Adverse News', description: 'Recent news articles mention regulatory scrutiny over environmental compliance.' }
-      ]);
-    }, 1000);
+
+      if (response.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to start verification');
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      if (!reader) return;
+
+      let buffer = '';
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.slice(6).trim();
+            if (!dataStr) continue;
+            try {
+              const eventData = JSON.parse(dataStr);
+              if (eventData.event === 'scraper_result') {
+                const task = eventData.task;
+                const result = eventData.data;
+                const status = result.success ? (result.score_impact < 0 ? 'risk' : 'done') : 'unavailable';
+                setProgressState(prev => ({ ...prev, [task]: status }));
+              } else if (eventData.event === 'scraper_error') {
+                const task = eventData.task;
+                setProgressState(prev => ({ ...prev, [task]: 'unavailable' }));
+              } else if (eventData.event === 'scoring_complete') {
+                const report = eventData.data;
+                setFinalScore(report.trust_score);
+                if (eventData.report_id) {
+                  setReportId(eventData.report_id);
+                }
+                
+                // Map API response to breakdown
+                const bdMap: any = {};
+                report.breakdown.forEach((item: any) => {
+                  // The backend task name might be in lowercase, so let's match correctly
+                  const key = item.source === 'GST' ? 'gst' : 
+                              item.source === 'MCA21' ? 'mca' : 
+                              item.source === 'eCourts' ? 'ecourts' : 
+                              item.source === 'NCLT/IBBI' ? 'nclt' : 
+                              item.source === 'RBI/SEBI' ? 'rbi' : 'news';
+                  bdMap[key] = {
+                    score: item.actual_score,
+                    max: item.max_score,
+                    label: item.label
+                  };
+                });
+                setBreakdown(bdMap);
+
+                // Set risk flags
+                const flags = report.risk_flags.map((flag: any, index: number) => ({
+                  id: index,
+                  level: flag.severity,
+                  title: `${flag.source} Warning`,
+                  description: flag.description
+                }));
+                setRiskFlags(flags);
+
+                setIsSearching(false);
+                setSearchComplete(true);
+              }
+            } catch (err) {
+              console.error('Failed to parse line:', line, err);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred during verification');
+      setIsSearching(false);
+    }
   };
 
   const getScoreColor = (score: number) => {
@@ -177,9 +239,21 @@ export default function SearchPage() {
             <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="flex justify-between items-center mb-6 pb-4 border-b border-border-color">
                 <h3 className="text-xl font-bold">Analysis Results</h3>
-                <button className="btn-secondary">
-                  <Download size={16} /> Export PDF
-                </button>
+                {reportId ? (
+                  <a
+                    href={`${API_URL}/api/v1/report/${reportId}/pdf?token=${getToken()}`}
+                    className="btn-secondary"
+                    style={{ textDecoration: 'none' }}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Download size={16} /> Export PDF
+                  </a>
+                ) : (
+                  <button className="btn-secondary" onClick={() => window.print()}>
+                    <Download size={16} /> Export PDF
+                  </button>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">

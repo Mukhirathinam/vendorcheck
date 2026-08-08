@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import { getToken } from '@/lib/auth';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
 export default function HistoryPage() {
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -13,7 +15,7 @@ export default function HistoryPage() {
       return;
     }
 
-    fetch('http://localhost:8000/api/v1/history', {
+    fetch(`${API_URL}/api/v1/history`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     .then(res => {

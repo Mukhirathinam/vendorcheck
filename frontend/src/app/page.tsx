@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import { getToken } from '@/lib/auth';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
 export default function AnalyticsDashboard() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -13,7 +15,7 @@ export default function AnalyticsDashboard() {
       return;
     }
 
-    fetch('http://localhost:8000/api/v1/analytics', {
+    fetch(`${API_URL}/api/v1/analytics`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     .then(res => {
