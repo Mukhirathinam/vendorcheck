@@ -491,21 +491,29 @@ export default function SearchPage() {
                   )}
                 </div>
 
-                {/* Sub-tab bar */}
-                <div style={{ display:'flex', gap:'0.4rem', background:'var(--bg-surface)', padding:'0.5rem', borderRadius:'0.75rem', border:'1px solid var(--border-color)', flexWrap:'wrap' }}>
-                  <SubTab id="overview"  label="Audit Overview"           icon={<Ic.ShieldOk size={16}/>} />
-                  <SubTab id="mca"       label="MCA Data & Directors"      icon={<Ic.Building size={16}/>} />
-                  <SubTab id="gst"       label="GST Compliance"            icon={<Ic.FileCheck size={16}/>} />
-                  <SubTab id="legal"     label="Legal & Insolvency"        icon={<Ic.Scale size={16}/>} />
-                  <SubTab id="news"      label={`Media Coverage (${newsArticles.length})`} icon={<Ic.News size={16}/>} />
-                  <SubTab id="payload"   label="Raw API Inspector"         icon={<Ic.Code size={16}/>} />
+                {/* Sub-tab bar (Now Quick Scroll Links) */}
+                <div style={{ display:'flex', gap:'0.4rem', background:'var(--bg-surface)', padding:'0.5rem', borderRadius:'0.75rem', border:'1px solid var(--border-color)', flexWrap:'wrap', position: 'sticky', top: '1rem', zIndex: 10 }}>
+                  <a href="#overview" style={{ textDecoration:'none', padding:'0.55rem 1.1rem', borderRadius:'0.45rem', fontSize:'0.88rem', fontWeight:700, color:'var(--text-secondary)', display:'flex', alignItems:'center', gap:'0.4rem' }}>
+                    <Ic.ShieldOk size={16}/> Audit Overview
+                  </a>
+                  <a href="#mca" style={{ textDecoration:'none', padding:'0.55rem 1.1rem', borderRadius:'0.45rem', fontSize:'0.88rem', fontWeight:700, color:'var(--text-secondary)', display:'flex', alignItems:'center', gap:'0.4rem' }}>
+                    <Ic.Building size={16}/> MCA Data & Directors
+                  </a>
+                  <a href="#gst" style={{ textDecoration:'none', padding:'0.55rem 1.1rem', borderRadius:'0.45rem', fontSize:'0.88rem', fontWeight:700, color:'var(--text-secondary)', display:'flex', alignItems:'center', gap:'0.4rem' }}>
+                    <Ic.FileCheck size={16}/> GST Compliance
+                  </a>
+                  <a href="#legal" style={{ textDecoration:'none', padding:'0.55rem 1.1rem', borderRadius:'0.45rem', fontSize:'0.88rem', fontWeight:700, color:'var(--text-secondary)', display:'flex', alignItems:'center', gap:'0.4rem' }}>
+                    <Ic.Scale size={16}/> Legal & Insolvency
+                  </a>
+                  <a href="#news" style={{ textDecoration:'none', padding:'0.55rem 1.1rem', borderRadius:'0.45rem', fontSize:'0.88rem', fontWeight:700, color:'var(--text-secondary)', display:'flex', alignItems:'center', gap:'0.4rem' }}>
+                    <Ic.News size={16}/> Media Coverage ({newsArticles.length})
+                  </a>
                 </div>
 
                 {/* ─────────────────────────────────────────────────────────
-                    OVERVIEW TAB
+                    OVERVIEW SECTION
                     ───────────────────────────────────────────────────────── */}
-                {resultSubTab === 'overview' && (
-                  <div style={{ display:'flex', flexDirection:'column', gap:'1.25rem' }} className="fade-up">
+                <div id="overview" style={{ display:'flex', flexDirection:'column', gap:'1.25rem', paddingTop: '2rem' }} className="fade-up">
                     {/* Score breakdown grid */}
                     <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'1rem' }}>
                       {breakdown.map((item, idx) => {
@@ -571,13 +579,11 @@ export default function SearchPage() {
                       </div>
                     )}
                   </div>
-                )}
 
                 {/* ─────────────────────────────────────────────────────────
-                    MCA MASTER DATA TAB
+                    MCA MASTER DATA SECTION
                     ───────────────────────────────────────────────────────── */}
-                {resultSubTab === 'mca' && (
-                  <div style={{ display:'flex', flexDirection:'column', gap:'1.25rem' }} className="fade-up">
+                <div id="mca" style={{ display:'flex', flexDirection:'column', gap:'1.25rem', paddingTop: '3rem' }} className="fade-up">
                     {/* Master Data Grid */}
                     <div style={{ background:'var(--bg-surface)', borderRadius:'1rem', border:'1px solid var(--border-color)', padding:'1.75rem' }}>
                       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', paddingBottom:'1rem', borderBottom:'1px solid var(--border-color)' }}>
@@ -651,13 +657,11 @@ export default function SearchPage() {
                       </div>
                     </div>
                   </div>
-                )}
 
                 {/* ─────────────────────────────────────────────────────────
-                    GST TAB
+                    GST SECTION
                     ───────────────────────────────────────────────────────── */}
-                {resultSubTab === 'gst' && (
-                  <div style={{ background:'var(--bg-surface)', borderRadius:'1rem', border:'1px solid var(--border-color)', padding:'1.75rem' }} className="fade-up">
+                <div id="gst" style={{ background:'var(--bg-surface)', borderRadius:'1rem', border:'1px solid var(--border-color)', padding:'1.75rem', marginTop: '1.25rem' }} className="fade-up">
                     <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.25rem', paddingBottom:'1rem', borderBottom:'1px solid var(--border-color)' }}>
                       <h3 style={{ fontWeight:900, fontSize:'1.1rem', color:'var(--text-primary)', margin:0, display:'flex', alignItems:'center', gap:'0.5rem' }}>
                         <Ic.FileCheck size={20} style={{ color:'#6366f1' }}/> GST Portal Filing & Compliance Details
@@ -680,13 +684,11 @@ export default function SearchPage() {
                       ))}
                     </div>
                   </div>
-                )}
 
                 {/* ─────────────────────────────────────────────────────────
-                    LEGAL TAB
+                    LEGAL SECTION
                     ───────────────────────────────────────────────────────── */}
-                {resultSubTab === 'legal' && (
-                  <div style={{ display:'flex', flexDirection:'column', gap:'1.25rem' }} className="fade-up">
+                <div id="legal" style={{ display:'flex', flexDirection:'column', gap:'1.25rem', paddingTop: '3rem' }} className="fade-up">
                     {[
                       { label:'eCourts District & High Court Litigation', source:'eCourts', icon:<Ic.Scale size={18} style={{ color:'#6366f1' }}/>, result: (rawResults.ecourts?.cases ?? []).length === 0 ? '✓ No pending litigation found across District / High Courts.' : `⚠ ${rawResults.ecourts.cases.length} cases found.`, color: '#22c55e' },
                       { label:'NCLT / IBBI Corporate Insolvency Proceedings', source:'NCLT/IBBI', icon:<Ic.ShieldX size={18} style={{ color:'#6366f1' }}/>, result: (rawResults.nclt?.proceedings ?? []).length === 0 ? '✓ No pending Corporate Insolvency Resolution Process (CIRP) found.' : `⚠ Active CIRP detected.`, color:'#22c55e' },
@@ -703,13 +705,11 @@ export default function SearchPage() {
                       </div>
                     ))}
                   </div>
-                )}
 
                 {/* ─────────────────────────────────────────────────────────
-                    MEDIA NEWS TAB
+                    MEDIA NEWS SECTION
                     ───────────────────────────────────────────────────────── */}
-                {resultSubTab === 'news' && (
-                  <div style={{ background:'var(--bg-surface)', borderRadius:'1rem', border:'1px solid var(--border-color)', padding:'1.75rem' }} className="fade-up">
+                <div id="news" style={{ background:'var(--bg-surface)', borderRadius:'1rem', border:'1px solid var(--border-color)', padding:'1.75rem', marginTop: '2rem' }} className="fade-up">
                     <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.5rem', paddingBottom:'1rem', borderBottom:'1px solid var(--border-color)', flexWrap:'wrap', gap:'1rem' }}>
                       <div>
                         <h3 style={{ fontWeight:900, fontSize:'1.1rem', color:'var(--text-primary)', margin:'0 0 0.25rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
@@ -773,13 +773,11 @@ export default function SearchPage() {
                       )}
                     </div>
                   </div>
-                )}
 
                 {/* ─────────────────────────────────────────────────────────
                     RAW PAYLOAD INSPECTOR
                     ───────────────────────────────────────────────────────── */}
-                {resultSubTab === 'payload' && (
-                  <div style={{ background:'var(--bg-surface)', borderRadius:'1rem', border:'1px solid var(--border-color)', padding:'1.75rem' }} className="fade-up">
+                <div id="payload" style={{ background:'var(--bg-surface)', borderRadius:'1rem', border:'1px solid var(--border-color)', padding:'1.75rem', marginTop: '2rem' }} className="fade-up">
                     <h3 style={{ fontWeight:900, fontSize:'1.1rem', color:'var(--text-primary)', margin:'0 0 1.25rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
                       <Ic.Code size={20} style={{ color:'#6366f1' }}/> Verified Official Registry Raw JSON Payload
                     </h3>
@@ -792,7 +790,7 @@ export default function SearchPage() {
                       {JSON.stringify({ trust_score:finalScore, risk_level:riskLevel, breakdown, raw_scrapers:rawResults }, null, 2)}
                     </pre>
                   </div>
-                )}
+
 
               </div>
             )}

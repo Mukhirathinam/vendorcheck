@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
+import Chatbot from "@/components/Chatbot";
 
 export const metadata: Metadata = {
   title: "VendorCheck Enterprise",
@@ -23,6 +24,7 @@ export default function RootLayout({
         <div className="app-layout">
           <Sidebar />
           {children}
+          <Chatbot />
         </div>
       </body>
     </html>
