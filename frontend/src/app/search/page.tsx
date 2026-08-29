@@ -155,50 +155,113 @@ export default function SearchPage() {
         }
       }
     } catch {
-      /* fallback demo */
+      /* fallback demo with dynamic pseudo-random scoring */
       await new Promise(r => setTimeout(r, 1400));
+      
+      // Simple string hash to generate deterministic pseudo-random numbers
+      const hash = gstin.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
       const isStruck = gstin.toUpperCase().includes('STRUCK');
-      setFinalScore(isStruck ? 18 : 91);
-      setRiskLevel(isStruck ? 'CRITICAL' : 'LOW');
-      setRecommendation(isStruck ? 'DO NOT PROCEED — Defunct / High Fraud Risk Entity' : 'Approved for Onboarding');
-      setBreakdown(isStruck ? [
-        { source:'GST',       label:'GST Portal Compliance',     max_score:25, actual_score:25, findings:['GSTIN found active in GST registry.'] },
-        { source:'MCA21',     label:'MCA21 Corporate Registry',  max_score:20, actual_score:0,  findings:['⚠ Company status: Struck Off.','Director DIN 01234567 DISQUALIFIED under Sec 164(2).'] },
-        { source:'eCourts',   label:'Court Litigation Records',  max_score:20, actual_score:20, findings:['No active litigation found.'] },
-        { source:'NCLT/IBBI', label:'NCLT/IBBI Insolvency',      max_score:20, actual_score:20, findings:['No pending CIRP found.'] },
-        { source:'RBI/SEBI',  label:'RBI/SEBI Defaulter Lists',  max_score:10, actual_score:10, findings:['Zero matches on wilful defaulter list.'] },
-        { source:'Google News',label:'Adverse Media Intelligence',max_score:5,  actual_score:5,  findings:['No adverse media detected.'] },
-      ] : [
-        { source:'GST',       label:'GST Portal Compliance',     max_score:25, actual_score:25, findings:['GSTIN active. Regular taxpayer. Last GSTR-3B: July 2026 (On Time).'] },
-        { source:'MCA21',     label:'MCA21 Corporate Registry',  max_score:20, actual_score:20, findings:['Company status: Active. CIN: L17110MH1973PLC019786.','All 4 directors DIN verified active.'] },
-        { source:'eCourts',   label:'Court Litigation Records',  max_score:20, actual_score:20, findings:['No pending cases found across District/High Courts.'] },
-        { source:'NCLT/IBBI', label:'NCLT/IBBI Insolvency',      max_score:20, actual_score:20, findings:['No CIRP. No liquidation proceedings found.'] },
-        { source:'RBI/SEBI',  label:'RBI/SEBI Defaulter Lists',  max_score:10, actual_score:10, findings:['Zero matches on RBI wilful defaulter and SEBI debarred lists.'] },
-        { source:'Google News',label:'Adverse Media Intelligence',max_score:5,  actual_score:5,  findings:['Clean media. No fraud/scam keywords in top 12 articles.'] },
+      
+      // Generate dynamic decimal score
+      let dynamicScore = isStruck ? 18.4 : 65 + (hash % 35) + (hash % 10) / 10; 
+      dynamicScore = Math.min(100, Math.max(0, dynamicScore));
+      // Format to 1 decimal place
+      const finalScoreFormatted = parseFloat(dynamicScore.toFixed(1));
+      
+      let riskLevel = 'LOW';
+      let recommendation = 'Approved for Onboarding';
+      if (dynamicScore < 30) { riskLevel = 'CRITICAL'; recommendation = 'DO NOT PROCEED — High Fraud Risk Entity'; }
+      else if (dynamicScore < 60) { riskLevel = 'HIGH'; recommendation = 'Do Not Proceed Without Further Investigation'; }
+      else if (dynamicScore < 75) { riskLevel = 'MEDIUM'; recommendation = 'Proceed with Caution - Extra Approvals Required'; }
+
+      // Generate dynamic breakdown scores based on total
+      const mcaBase = isStruck ? 0 : 15 + (hash % 6);
+      const mcaScore = parseFloat(Math.min(20, mcaBase).toFixed(1));
+      
+      const courtBase = 12 + (hash % 9);
+      const courtScore = parseFloat(Math.min(20, courtBase).toFixed(1));
+
+      const ncltBase = 15 + (hash % 6);
+      const ncltScore = parseFloat(Math.min(20, ncltBase).toFixed(1));
+
+      setFinalScore(finalScoreFormatted);
+      setRiskLevel(riskLevel);
+      setRecommendation(recommendation);
+      setBreakdown([
+        { source:'GST',       label:'GST Portal Compliance',     max_score:25, actual_score: isStruck ? 15 : 24.5, findings:['GSTIN found active in GST registry.'] },
+        { source:'MCA21',     label:'MCA21 Corporate Registry',  max_score:20, actual_score: mcaScore,  findings: isStruck ? ['⚠ Company status: Struck Off.'] : [`Status: Active. ROC Filings are up to date.`] },
+        { source:'eCourts',   label:'Court Litigation Records',  max_score:20, actual_score: courtScore, findings:[courtScore < 15 ? `⚠ ${hash % 5 + 1} pending cases found.` : 'No active litigation found.'] },
+        { source:'NCLT/IBBI', label:'NCLT/IBBI Insolvency',      max_score:20, actual_score: ncltScore, findings:['No pending CIRP found.'] },
+        { source:'RBI/SEBI',  label:'RBI/SEBI Defaulter Lists',  max_score:10, actual_score: isStruck ? 0 : 10, findings:[isStruck ? 'Found on SEBI debarred list' : 'Zero matches on wilful defaulter list.'] },
+        { source:'Google News',label:'Adverse Media Intelligence',max_score:5,  actual_score: isStruck ? 0 : 4.5,  findings:['Analyzed recent media coverage.'] },
       ]);
       setRiskFlags(isStruck ? [
         { id:1, level:'CRITICAL', title:'MCA21 — Struck Off', description:'Company status in MCA21 is Struck Off (Defunct Entity). Continuing trade with this vendor is legally high-risk.' },
         { id:2, level:'CRITICAL', title:'MCA21 — Disqualified Director', description:'Director JOHN DOE (DIN: 01234567) is DISQUALIFIED under Companies Act Section 164(2). All transactions may be voidable.' },
+      ] : courtScore < 15 ? [
+        { id:1, level:'MEDIUM', title:'eCourts — Pending Litigation', description:`Found ${hash % 5 + 1} active civil cases in district courts.` }
       ] : []);
+      
+      // Generate 100 huge dynamic news articles
+      const sourcesList = ['Economic Times', 'Moneycontrol', 'LiveMint', 'Business Standard', 'Bloomberg Quint', 'Reuters', 'Financial Express', 'CNBC TV18', 'The Hindu Business Line', 'TechCrunch India'];
+      const positiveTitles = ['Profit Surges 22%', 'Leads Growth in Sector', 'Launches Green Energy Complex', 'Expands to 2,000+ Tier-2 Cities', 'Creates 50,000 Jobs', 'CEO Named Most Admired Business Leader', 'Rollout Fastest in Emerging Markets', 'Overtakes Competitors in Market Share', 'Announces dividend of Rs 15 per share', 'Industry analysts maintain BUY rating', 'Wins Major Government Contract', 'Acquires European Tech Firm', 'Reports Record Quarterly Revenue', 'Partners with Global Tech Giant', 'Receives ESG Excellence Award'];
+      const adverseTitles = ['Faces SEBI inquiry', 'Suppliers report payment defaults', 'MCA Orders Audit Over Compliance Lapses', 'Strike-Off Notice Issued', 'Sued by former employees', 'Tax Raids at Corporate Headquarters', 'Promoter Shares Pledged', 'Downgraded by Rating Agency', 'Misses Debt Repayment Deadline', 'Faces Environmental Fines'];
+      const neutralTitles = ['Appoints New Board Members', 'Minor delays in project execution reported', 'Revises FY Guidance', 'Holds Annual General Meeting', 'Shifts HQ to New Business District', 'Announces Share Buyback Program', 'Restructures Core Business Units'];
+
+      const dynamicNews = Array.from({ length: 100 }).map((_, idx) => {
+        const seed = hash + idx;
+        const source = sourcesList[seed % sourcesList.length];
+        const date = new Date(Date.now() - (seed % 365) * 24 * 60 * 60 * 1000);
+        const dateStr = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        
+        let sentiment = 'ALL';
+        let titleBase = '';
+        
+        if (isStruck) {
+          // If struck off, 80% adverse
+          sentiment = (seed % 10 < 8) ? 'ADVERSE' : 'ALL';
+          titleBase = sentiment === 'ADVERSE' ? adverseTitles[seed % adverseTitles.length] : neutralTitles[seed % neutralTitles.length];
+        } else {
+          // Normal: 60% positive, 30% neutral, 10% adverse
+          const rand = seed % 100;
+          if (rand < 60) sentiment = 'POSITIVE';
+          else if (rand < 90) sentiment = 'ALL';
+          else sentiment = 'ADVERSE';
+          
+          if (sentiment === 'POSITIVE') titleBase = positiveTitles[seed % positiveTitles.length];
+          else if (sentiment === 'ADVERSE') titleBase = adverseTitles[seed % adverseTitles.length];
+          else titleBase = neutralTitles[seed % neutralTitles.length];
+        }
+        
+        return {
+          title: `${isStruck ? 'Apex Global' : gstin.slice(0, 5) + ' Co.'} ${titleBase}`,
+          source: source,
+          published: dateStr,
+          sentiment: sentiment,
+          url: `https://news.google.com/search?q=${encodeURIComponent(gstin)}+${encodeURIComponent(titleBase)}`
+        };
+      });
+      // Sort by date (mock sorting)
+      dynamicNews.sort((a, b) => new Date(b.published).getTime() - new Date(a.published).getTime());
+
       setRawResults({
         mca: {
-          company_name: isStruck ? 'APEX GLOBAL INFRATECH PRIVATE LIMITED' : 'RELIANCE INDUSTRIES LIMITED',
-          cin: isStruck ? 'U74999MH2018PTC309124' : 'L17110MH1973PLC019786',
+          company_name: isStruck ? 'APEX GLOBAL INFRATECH PRIVATE LIMITED' : `${gstin.slice(0, 5)} ENTERPRISES PRIVATE LIMITED`,
+          cin: isStruck ? 'U74999MH2018PTC309124' : `U${hash % 90000 + 10000}MH2018PTC${hash % 900000 + 100000}`,
           status: isStruck ? 'Struck Off' : 'Active',
-          incorporation_date: isStruck ? '14 Mar 2018' : '08 May 1973',
-          paid_up_capital: isStruck ? '₹ 1,00,000' : '₹ 6,766 Crores',
-          authorized_capital: isStruck ? '₹ 10,00,000' : '₹ 15,000 Crores',
+          incorporation_date: isStruck ? '14 Mar 2018' : '08 May 2015',
+          paid_up_capital: isStruck ? '₹ 1,00,000' : `₹ ${hash % 50 + 5} Crores`,
+          authorized_capital: isStruck ? '₹ 10,00,000' : `₹ ${hash % 100 + 10} Crores`,
           company_category: 'Company limited by Shares',
-          class_of_company: isStruck ? 'Private (Defunct)' : 'Public Listed (NSE/BSE)',
-          registered_address: isStruck ? 'Unit 102, Industrial Estate, Thane West, Maharashtra 400601' : '3rd Floor, Maker Chambers IV, 222 Nariman Point, Mumbai, Maharashtra 400021',
+          class_of_company: isStruck ? 'Private (Defunct)' : 'Private Commercial',
+          registered_address: isStruck ? 'Unit 102, Industrial Estate, Thane West, Maharashtra 400601' : '3rd Floor, Business Park, Mumbai, Maharashtra 400021',
           directors: isStruck ? [
             { name:'JOHN DOE', din:'01234567', designation:'Director', disqualified:true, appointment_date:'14 Mar 2018' },
             { name:'VIKRAM SHARMA', din:'07891234', designation:'Director', disqualified:false, appointment_date:'14 Mar 2018' },
           ] : [
-            { name:'MUKESH DHIRUBHAI AMBANI', din:'00001695', designation:'Chairman & Managing Director', disqualified:false, appointment_date:'01 Apr 1977' },
-            { name:'NITA MUKESH AMBANI', din:'02409987', designation:'Non-Executive Director', disqualified:false, appointment_date:'18 Jun 2014' },
-            { name:'ISHA MUKESH AMBANI', din:'06984175', designation:'Non-Executive Director', disqualified:false, appointment_date:'28 Aug 2023' },
-            { name:'AKASH MUKESH AMBANI', din:'06984190', designation:'Non-Executive Director', disqualified:false, appointment_date:'28 Aug 2023' },
+            { name:'ARUN KUMAR', din:`0000${hash % 9000 + 1000}`, designation:'Managing Director', disqualified:false, appointment_date:'01 Apr 2015' },
+            { name:'SNEHA PATIL', din:`0240${hash % 9000 + 1000}`, designation:'Director', disqualified:false, appointment_date:'18 Jun 2018' },
+            { name:'RAHUL DESAI', din:`0698${hash % 9000 + 1000}`, designation:'Non-Executive Director', disqualified:false, appointment_date:'28 Aug 2021' },
           ],
         },
         gst: {
@@ -206,17 +269,7 @@ export default function SearchPage() {
           principal_place: isStruck ? 'Thane, Maharashtra' : 'Mumbai, Maharashtra',
         },
         news: {
-          articles: isStruck ? [
-            { title:`MCA Orders Audit into Apex Global Infratech Over Compliance Lapses`, source:'Economic Times', published:'04 Aug 2026', sentiment:'ADVERSE', url:`https://news.google.com/search?q=${encodeURIComponent(gstin)}` },
-            { title:`Registrar of Companies Issues Strike-Off Notice to Apex Global`, source:'Business Standard', published:'18 Jul 2026', sentiment:'ADVERSE', url:`https://news.google.com/search?q=${encodeURIComponent(gstin)}` },
-          ] : [
-            { title:`Reliance Industries Q2 FY26 Profit Surges 22%; Jio & Retail Lead Growth`, source:'LiveMint', published:'25 Jul 2026', sentiment:'POSITIVE', url:`https://news.google.com/search?q=${encodeURIComponent(gstin)}` },
-            { title:`Reliance Launches Green Energy Giga Complex in Jamnagar`, source:'Financial Express', published:'12 Jul 2026', sentiment:'POSITIVE', url:`https://news.google.com/search?q=${encodeURIComponent(gstin)}` },
-            { title:`Reliance Retail Expands to 2,000+ Tier-2 Cities, Creates 50,000 Jobs`, source:'Moneycontrol', published:'05 Jul 2026', sentiment:'POSITIVE', url:`https://news.google.com/search?q=${encodeURIComponent(gstin)}` },
-            { title:`Mukesh Ambani Named Most Admired Business Leader in Asia 2026: Forbes`, source:'Economic Times', published:'28 Jun 2026', sentiment:'POSITIVE', url:`https://news.google.com/search?q=${encodeURIComponent(gstin)}` },
-            { title:`Reliance 5G Rollout Reaches 650 Districts, Fastest in Emerging Markets`, source:'TechCrunch India', published:'20 Jun 2026', sentiment:'POSITIVE', url:`https://news.google.com/search?q=${encodeURIComponent(gstin)}` },
-            { title:`Reliance JioMart Overtakes Amazon India in Grocery GMV`, source:'Bloomberg Quint', published:'10 Jun 2026', sentiment:'POSITIVE', url:`https://news.google.com/search?q=${encodeURIComponent(gstin)}` },
-          ]
+          articles: dynamicNews
         }
       });
       setIsSearching(false); setSearchDone(true);

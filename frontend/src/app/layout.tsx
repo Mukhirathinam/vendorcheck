@@ -23,7 +23,9 @@ export default function RootLayout({
       <body>
         <div className="app-layout">
           <Sidebar />
-          {children}
+          <main className="main-content">
+            {children}
+          </main>
           <Chatbot />
         </div>
       </body>
