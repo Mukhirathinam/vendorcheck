@@ -4,7 +4,7 @@ export interface AuditReport {
   cin_or_gstin: string;
   trust_score: number;
   risk_level: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-  status: 'Approved' | 'Manual Review' | 'Rejected';
+  status: 'Low Risk' | 'Medium Risk' | 'High Risk' | 'Critical Risk';
   recommendation: string;
   date: string;
   timestamp: number;

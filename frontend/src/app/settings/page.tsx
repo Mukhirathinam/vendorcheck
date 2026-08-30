@@ -52,7 +52,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* API Keys Card */}
+        {/* Production API Keys Card */}
         <div className="card">
           <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.15rem', fontWeight: 800, color: '#fff' }}>
             Production REST API Key
@@ -77,6 +77,28 @@ export default function SettingsPage() {
             <button onClick={handleCopy} className="btn-primary" style={{ padding: '0.75rem 1.5rem', minWidth: '110px' }}>
               {copied ? '✓ Copied' : 'Copy Key'}
             </button>
+          </div>
+        </div>
+
+        {/* Live Setu / GSTN External Gateway Card */}
+        <div className="card">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+            <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#fff' }}>
+              External Government & Setu KYC API Gateway
+            </h3>
+            <span style={{ fontSize: '0.72rem', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '0.2rem 0.6rem', borderRadius: '999px', fontWeight: 800 }}>
+              OPTIONAL LIVE CONNECTOR
+            </span>
+          </div>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: '0 0 1.25rem', lineHeight: 1.5 }}>
+            If you have direct Setu KYC API credentials or Government Portal Gateway keys, you can connect them in your backend <code style={{ color: '#818cf8', background: 'rgba(255,255,255,0.06)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>backend/.env</code> file for live NIC GST & MCA verification.
+          </p>
+
+          <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '1rem', fontFamily: 'monospace', fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+            <span style={{ color: '#64748b' }}># Add to backend/.env for live Setu GSTN integration:</span><br/>
+            <span style={{ color: '#38bdf8' }}>SETU_CLIENT_ID</span>=<span style={{ color: '#10b981' }}>your_setu_client_id_here</span><br/>
+            <span style={{ color: '#38bdf8' }}>SETU_CLIENT_SECRET</span>=<span style={{ color: '#10b981' }}>your_setu_client_secret_here</span><br/>
+            <span style={{ color: '#38bdf8' }}>SETU_BASE_URL</span>=<span style={{ color: '#10b981' }}>https://dg-sandbox.setu.co</span>
           </div>
         </div>
       </div>
