@@ -18,9 +18,9 @@ export default function AnalyticsDashboard() {
   const avgScore = totalAudits > 0 
     ? parseFloat((audits.reduce((acc, a) => acc + a.trust_score, 0) / totalAudits).toFixed(2)) 
     : 0;
-  const approvedCount = audits.filter(a => a.status === 'Approved').length;
-  const rejectedCount = audits.filter(a => a.status === 'Rejected').length;
-  const reviewCount = audits.filter(a => a.status === 'Manual Review').length;
+  const lowRiskCount = audits.filter(a => a.trust_score >= 75).length;
+  const criticalCount = audits.filter(a => a.trust_score < 35).length;
+  const mediumCount = audits.filter(a => a.trust_score >= 35 && a.trust_score < 75).length;
 
   if (loading) {
     return (
@@ -75,8 +75,8 @@ export default function AnalyticsDashboard() {
         {[
           { label: 'Total Vendors Audited', val: totalAudits, color: '#fff', desc: 'Entities in ledger' },
           { label: 'Mean Trust Score', val: totalAudits > 0 ? avgScore : '—', color: '#38bdf8', desc: 'Weighted average' },
-          { label: 'Approved (Low Risk)', val: approvedCount, color: '#10b981', desc: 'Ready for onboarding' },
-          { label: 'Rejected (High Risk)', val: rejectedCount, color: '#ef4444', desc: 'Flagged compliance risks' },
+          { label: 'Low Risk Vendors', val: lowRiskCount, color: '#10b981', desc: 'Score ≥ 75' },
+          { label: 'High / Critical Risk', val: criticalCount, color: '#ef4444', desc: 'Score < 35 — flag for review' },
         ].map((s, idx) => (
           <div key={idx} className="card" style={{ padding: '1.5rem' }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -140,16 +140,17 @@ export default function AnalyticsDashboard() {
                   <th>Company / Entity Name</th>
                   <th>GSTIN / Identifier</th>
                   <th>Trust Score (Exact)</th>
-                  <th>Risk Classification</th>
-                  <th>Action</th>
+                  <th>Risk Level</th>
                 </tr>
               </thead>
               <tbody>
                 {audits.map((r) => {
-                  const isRejected = r.status === 'Rejected' || r.trust_score < 35;
-                  const isReview = r.status === 'Manual Review' || (r.trust_score >= 35 && r.trust_score < 75);
-                  const color = isRejected ? '#ef4444' : isReview ? '#eab308' : '#10b981';
-                  const bg = isRejected ? 'rgba(239,68,68,0.1)' : isReview ? 'rgba(234,179,8,0.1)' : 'rgba(16,185,129,0.1)';
+                  const isCritical = r.trust_score < 35;
+                  const isHigh = r.trust_score >= 35 && r.trust_score < 55;
+                  const isMedium = r.trust_score >= 55 && r.trust_score < 75;
+                  const color = isCritical ? '#ef4444' : isHigh ? '#f97316' : isMedium ? '#eab308' : '#10b981';
+                  const bg = isCritical ? 'rgba(239,68,68,0.1)' : isHigh ? 'rgba(249,115,22,0.1)' : isMedium ? 'rgba(234,179,8,0.1)' : 'rgba(16,185,129,0.1)';
+                  const riskLabel = isCritical ? 'CRITICAL RISK' : isHigh ? 'HIGH RISK' : isMedium ? 'MEDIUM RISK' : 'LOW RISK';
 
                   return (
                     <tr key={r.id}>
@@ -163,13 +164,8 @@ export default function AnalyticsDashboard() {
                       </td>
                       <td>
                         <span style={{ padding: '0.3rem 0.75rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 800, background: bg, color, border: `1px solid ${color}33` }}>
-                          {r.status?.toUpperCase() || (isRejected ? 'REJECTED' : isReview ? 'MANUAL REVIEW' : 'APPROVED')}
+                          {riskLabel}
                         </span>
-                      </td>
-                      <td>
-                        <Link href="/search" className="btn-secondary" style={{ textDecoration: 'none', padding: '0.4rem 0.85rem', fontSize: '0.8rem' }}>
-                          Re-Audit
-                        </Link>
                       </td>
                     </tr>
                   );

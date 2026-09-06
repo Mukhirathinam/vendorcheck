@@ -137,16 +137,6 @@ export default function SearchPage() {
 
     const qUpper = query.toUpperCase().trim();
 
-    // ═════════════════════════════════════════════════════════════════════════
-    // 1. COMPREHENSIVE INDIAN CORPORATE DATABASE (Search by Name or GSTIN)
-    // ═════════════════════════════════════════════════════════════════════════
-    const ENTERPRISE_INDEX: Array<{
-      names: string[];
-      gstin: string;
-      cin: string;
-      legalName: string;
-      city: string;
-      state: string;
     // ── KNOWN REAL-WORLD GSTIN DIRECTORY ──
     const KNOWN_ENTITIES: Record<string, { name: string; status: 'Active' | 'Inactive / Delayed' | 'Cancelled / Struck Off'; score: number; risk: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'; rec: string; city: string; cin: string }> = {
       // User's Benchmark Test Cases from Screenshots
@@ -604,7 +594,7 @@ export default function SearchPage() {
       cin_or_gstin: qUpper,
       trust_score: dynamicScore,
       risk_level: riskLvl as any,
-      status: dynamicScore >= 75 ? 'Approved' : dynamicScore >= 45 ? 'Manual Review' : 'Rejected',
+      status: dynamicScore >= 75 ? 'Low Risk' : dynamicScore >= 45 ? 'Medium Risk' : dynamicScore >= 25 ? 'High Risk' : 'Critical Risk',
       recommendation: recText,
       date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
       breakdown: breakdownData,

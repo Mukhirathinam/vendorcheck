@@ -21,36 +21,37 @@ const Chatbot = () => {
     scrollToBottom();
   }, [messages, isOpen, isTyping]);
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || isTyping) return;
 
     const userMsg = input.trim();
-    setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+    const newMessages = [...messages, { role: 'user', content: userMsg }];
+    setMessages(newMessages);
     setInput('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      let aiResponse = "I have analyzed your query against our 6-source compliance grid and 100-journal archives.";
-      const lower = userMsg.toLowerCase();
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMsg,
+          history: newMessages.slice(-6)
+        })
+      });
 
-      if (lower.includes('score') || lower.includes('calculate') || lower.includes('metric')) {
-        aiResponse = "The VendorCheck Trust Score is a weighted multi-dimensional metric calculated across:\n\n1. GST Compliance (25 pts)\n2. MCA21 Corporate Health (20 pts)\n3. eCourts Litigation (20 pts)\n4. NCLT Insolvency (20 pts)\n5. RBI/SEBI Defaulter Registers (10 pts)\n6. 100+ Journal Media Intelligence (5 pts)\n\nFinal scores are decimal-accurate with immediate hard disqualifications applied for Struck-Off status or Section 164 director bans.";
-      } else if (lower.includes('struck off') || lower.includes('strike')) {
-        aiResponse = "⚠️ **Critical Legal Risk**: A 'Struck Off' status under Section 248 of the Companies Act 2013 means the Registrar of Companies has dissolved the legal entity. Any commercial contracts entered into with this company are unenforceable and legally high-risk.";
-      } else if (lower.includes('164') || lower.includes('director') || lower.includes('din')) {
-        aiResponse = "Under Section 164(2) of the Companies Act 2013, a director who fails to file annual returns for 3 consecutive financial years is disqualified from holding directorship for 5 years. Any agreements executed by a disqualified signatory can be challenged in commercial courts.";
-      } else if (lower.includes('nclt') || lower.includes('cirp') || lower.includes('insolvency')) {
-        aiResponse = "We cross-reference all 15 NCLT benches under the Insolvency and Bankruptcy Code (IBC) 2016. If an operational or financial creditor has filed a Section 7, 9, or 10 petition, the entity may enter Corporate Insolvency Resolution Process (CIRP), posing severe credit recovery risk.";
-      } else if (lower.includes('news') || lower.includes('journal') || lower.includes('100')) {
-        aiResponse = "Our media engine scans 100+ publications including The Economic Times, Reuters, LiveMint, Business Standard, and the Official MCA Gazette. It tags articles into Positive Growth (🟢), Regulatory Filings (⚪), and Adverse Risk (🔴) to prevent reputational damage.";
+      if (res.ok) {
+        const data = await res.json();
+        setMessages(prev => [...prev, { role: 'assistant', content: data.response || data.reply || 'No response returned.' }]);
       } else {
-        aiResponse = `Regarding "${userMsg}":\n\nOur system recommends reviewing the entity's 6-dimensional scorecard and 100-journal media breakdown on the Due Diligence dashboard before executing vendor purchase orders. Let me know if you want me to draft an executive onboarding recommendation!`;
+        setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ Unable to process query. Status: ${res.status}` }]);
       }
-
+    } catch (err: any) {
+      setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ Connection error: ${err.message || 'Server unreachable'}` }]);
+    } finally {
       setIsTyping(false);
-      setMessages(prev => [...prev, { role: 'assistant', content: aiResponse }]);
-    }, 750);
+    }
   };
 
   return (

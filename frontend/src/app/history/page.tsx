@@ -100,17 +100,18 @@ export default function HistoryPage() {
                   <th>Company / Legal Entity</th>
                   <th>CIN / GSTIN</th>
                   <th>Trust Score</th>
-                  <th>Status</th>
+                  <th>Risk Level</th>
                   <th>100-Journal Scan</th>
-                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredHistory.map((r) => {
-                  const isRejected = r.status === 'Rejected' || r.trust_score < 35;
-                  const isReview = r.status === 'Manual Review' || (r.trust_score >= 35 && r.trust_score < 75);
-                  const color = isRejected ? '#ef4444' : isReview ? '#eab308' : '#10b981';
-                  const bg = isRejected ? 'rgba(239,68,68,0.1)' : isReview ? 'rgba(234,179,8,0.1)' : 'rgba(16,185,129,0.1)';
+                  const isCritical = r.trust_score < 35;
+                  const isHigh = r.trust_score >= 35 && r.trust_score < 55;
+                  const isMedium = r.trust_score >= 55 && r.trust_score < 75;
+                  const color = isCritical ? '#ef4444' : isHigh ? '#f97316' : isMedium ? '#eab308' : '#10b981';
+                  const bg = isCritical ? 'rgba(239,68,68,0.1)' : isHigh ? 'rgba(249,115,22,0.1)' : isMedium ? 'rgba(234,179,8,0.1)' : 'rgba(16,185,129,0.1)';
+                  const riskLabel = isCritical ? 'CRITICAL RISK' : isHigh ? 'HIGH RISK' : isMedium ? 'MEDIUM RISK' : 'LOW RISK';
 
                   return (
                     <tr key={r.id}>
@@ -124,18 +125,13 @@ export default function HistoryPage() {
                       </td>
                       <td>
                         <span style={{ padding: '0.25rem 0.65rem', borderRadius: '999px', fontSize: '0.72rem', fontWeight: 800, background: bg, color, border: `1px solid ${color}33` }}>
-                          {r.status?.toUpperCase() || (isRejected ? 'REJECTED' : isReview ? 'MANUAL REVIEW' : 'APPROVED')}
+                          {riskLabel}
                         </span>
                       </td>
                       <td>
                         <span style={{ fontSize: '0.8rem', color: '#818cf8', fontWeight: 700 }}>
                           100 Articles Verified
                         </span>
-                      </td>
-                      <td>
-                        <Link href="/search" className="btn-secondary" style={{ textDecoration: 'none', padding: '0.35rem 0.75rem', fontSize: '0.78rem' }}>
-                          Run Re-Scan
-                        </Link>
                       </td>
                     </tr>
                   );
